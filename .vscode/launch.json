@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-TicketSecureApplication<ticketsecure>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.ticketsecure.TicketSecureApplication",
+            "projectName": "ticketsecure",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}

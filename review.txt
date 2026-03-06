@@ -1,0 +1,115 @@
+============= remover @Data =================
+Dica de Ouro (Boas Práticas de Mercado)
+
+Usar a anotação @Data do Lombok em Entidades JPA (@Entity) é considerado uma má prática no mercado. 
+O @Data gera métodos equals(), hashCode() e toString() 
+que podem causar loops infinitos e problemas graves de performance 
+quando começarmos a buscar relações complexas no banco (como buscar um Usuário que tem várias Reservas).
+
+Como o mercado faz?
+Em vez de usar @Data, usamos apenas @Getter e @Setter. 
+Se você quiser ser super restritivo (o que é ótimo), 
+você coloca só @Getter no topo da classe, 
+e só coloca o @Setter especificamente em cima dos campos que realmente podem ser alterados pelo usuário.
+
+=============== Lombok =======================
+
+O Método do Lombok: @Setter(AccessLevel.NONE)
+
+Esta é a resposta exata para a sua pergunta. Se você colocar essa anotação em cima de um atributo,
+ o Lombok gera o Getter para você poder ler o dado, mas não gera o Setter. 
+ Ou seja, ninguém consegue alterar esse valor via código depois que o objeto é instanciado.
+
+É altamente recomendável fazer isso com o id e a data de criação.
+
+Exemplo:
+
+import lombok.AccessLevel;
+import lombok.Setter;
+
+// ...
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Setter(AccessLevel.NONE) // Bloqueia a criação do setId()
+    private UUID id;
+
+================== JPA ============================================
+
+A Proteção do Banco (JPA): updatable = false
+
+Você já até aplicou isso muito bem em alguns dos seus arquivos 
+(como na createdDate da classe User e Event)!
+
+Enquanto o Lombok protege o código Java (ninguém consegue chamar o .set()), 
+o updatable = false protege a instrução SQL. 
+Se alguém conseguir burlar o Java e alterar o valor do ID ou da Data de Criação na memória, 
+o Hibernate vai ignorar esse campo na hora de fazer o UPDATE no banco de dados.
+
+O ideal é usar os dois juntos para dados críticos:
+
+Exemplo:
+
+@Column(name = "created_date", updatable = false)
+    @Setter(AccessLevel.NONE)
+    private LocalDate createdDate;
+
+++++++++++++++++ REVER +++++++++++++++++++++++++++++++++
+
+Usar a anotação @Data do Lombok em Entidades JPA (@Entity) é considerado uma má prática no mercado. 
+O @Data gera métodos equals(), hashCode() e toString() 
+que podem causar loops infinitos e problemas graves de performance
+ quando começarmos a buscar relações complexas no banco (como buscar um Usuário que tem várias Reservas).
+
+Como o mercado faz?
+Em vez de usar @Data, usamos apenas @Getter e @Setter. 
+Se você quiser ser super restritivo (o que é ótimo), você coloca só @Getter no topo da classe, 
+e só coloca o @Setter especificamente em cima dos campos que realmente podem ser alterados pelo usuário.
+
+Veja como ficaria o seu User.java blindado e com nível profissional:
+Exemplo:
+
+package com.ticketsecure.domain.model;
+
+import java.util.UUID;
+import java.time.LocalDate;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.AccessLevel;
+import jakarta.persistence.*;
+import com.ticketsecure.domain.enumerate.Role;
+
+@Getter // Gera get para todos os campos
+@Entity
+@Table(name = "users")
+public class User {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    // Sem Setter! O ID nunca muda.
+    private UUID id;
+
+    @Setter // O nome pode ser alterado
+    @Column(nullable = false)
+    private String name;
+
+    @Setter // O email pode ser alterado
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @Setter // A senha pode ser alterada (redefinir senha)
+    @Column(nullable = false)
+    private String senhaHash;
+
+    // Sem Setter! CPF não se muda depois de cadastrado.
+    @Column(nullable = false, unique = true, length = 11)
+    private String cpf;
+
+    @Setter // A role pode mudar (ex: um admin promove um usuário)
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
+
+    // Sem Setter e protegido no banco! Data de criação é imutável.
+    @Column(name = "created_date", updatable = false)
+    private LocalDate createdDate = LocalDate.now();
+}
