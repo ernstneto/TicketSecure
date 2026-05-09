@@ -4,14 +4,14 @@ import java.util.UUID;
 import java.time.LocalDate;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder; // <-- Nova importação
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import jakarta.persistence.*;
 import com.ticketsecure.domain.enumerate.Role;
 
 @Data
-@Builder // <-- Nova anotação mágica
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -20,8 +20,7 @@ public class User {
     
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Builder.Default // <-- Avisa o Builder para usar esse valor padrão
-    private UUID id = UUID.randomUUID(); // <-- Gera sozinho!
+    private UUID id;
 
     @Column(nullable = false)
     private String name;
@@ -41,5 +40,5 @@ public class User {
 
     @Column(name = "created_date", updatable = false)
     @Builder.Default // <-- Avisa o Builder para usar esse valor padrão
-    private LocalDate createdDate = LocalDate.now(); // <-- Pega a data de hoje sozinho!
+    private LocalDate createdDate = LocalDate.now();
 }

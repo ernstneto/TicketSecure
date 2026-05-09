@@ -2,12 +2,20 @@ package com.ticketsecure.domain.model;
 
 import java.util.UUID;
 import java.time.LocalDateTime;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 import jakarta.persistence.*;
 
 @Data
 @Entity
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "ticket_lots")
 public class TicketLot {
     @Id
@@ -34,5 +42,6 @@ public class TicketLot {
     private Integer availableQuantity;
 
     @Column(name = "created_date", updatable = false)
-    private LocalDateTime createdDate;
+    @Builder.Default
+    private LocalDateTime createdDate = LocalDateTime.now();
 }
