@@ -1,33 +1,68 @@
-HELP.md
-target/
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+# ==========================================
+# ☕ JAVA & MAVEN (Spring Boot)
+# ==========================================
+# Arquivos compilados e pacotes gerados
+**/target/
+**.class
+**.war
+**.ear
+**.jar
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
+# Logs de execução do Spring
+**.log
+/logs/
 
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
+# Arquivo de propriedades locais (caso contenha senhas reais de produção)
+# Dica de segurança: mantenha o application.properties padrão com dados genéricos
+# e use arquivos como application-local.properties para suas credenciais reais.
+**/src/main/resources/application-local.properties
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
 
-### VS Code ###
+# ==========================================
+# 🐍 PYTHON & MACHINE LEARNING
+# ==========================================
+# Ambientes virtuais (Evita subir gigabytes de dependências da pasta pip)
+venv/
+.venv/
+env/
+ENV/
+pyenv/
+
+# Caches de bytecode do Python
+**/__pycache__/
+**.py[cod]
+***$py.class
+
+# Arquivos de dados e modelos pesados de Inteligência Artificial
+# O modelo treinado (.pkl) pode ser gerado localmente pelo script de treino,
+# evitando poluir o repositório com arquivos binários grandes.
+**.pkl
+**.csv
+**.xlsx
+
+
+# ==========================================
+# 🛠️ AMBIENTE DE DESENVOLVIMENTO & IDEs
+# ==========================================
+# Configurações do VS Code
 .vscode/
+*.code-workspace
+
+# Configurações do IntelliJ IDEA / WebStorm
+.idea/
+**.iml
+**.iws
+
+# Arquivos de sistema operacional
+.DS_Store
+Thumbs.db
+
+
+# ==========================================
+# 🔒 SEGURANÇA & SEGREDOS
+# ==========================================
+# Arquivos de variáveis de ambiente
+.env
+*.env.local
+
+**.txt
