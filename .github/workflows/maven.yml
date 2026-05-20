@@ -1,0 +1,26 @@
+name: CI TicketSecure - Java CI with Maven
+
+# O robô será ativado toda vez que houver um push na branch "main" (ou "master")
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest # O servidor que vai rodar o código
+
+    steps:
+    - name: Fazer o checkout do código
+      uses: actions/checkout@v3
+
+    - name: Configurar o Java (JDK 17)
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17' # Mude para '21' se estiver usando o Java 21
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Compilar e Rodar os Testes
+      run: mvn -B package --file pom.xml
