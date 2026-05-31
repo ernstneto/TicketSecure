@@ -24,6 +24,9 @@ import com.ticketsecure.config.SecurityConfig;
 import com.ticketsecure.domain.enumerate.ReserveStatus;
 import com.ticketsecure.dto.ReserveRequestDTO;
 import com.ticketsecure.dto.ReserveResponseDTO;
+import com.ticketsecure.repository.ReserveRepository;
+import com.ticketsecure.repository.TicketRepository;
+import com.ticketsecure.security.NetworkAuditService;
 import com.ticketsecure.service.ReserveService;
 
 @Import(SecurityConfig.class)
@@ -33,11 +36,20 @@ public class ReserveControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockitoBean // <-- Usando a anotação moderna no lugar de @Mock ou @MockBean
+    @MockitoBean 
     private ReserveService reserveService;
+
+    @MockitoBean
+    private ReserveRepository reserveRepository;
+
+    @MockitoBean
+    private TicketRepository ticketRepository;
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @MockitoBean
+    private NetworkAuditService networkAuditService;
 
     @Test
     public void deveRetornar201QuandoCriarReservaComSucesso() throws Exception {
@@ -55,9 +67,15 @@ public class ReserveControllerTest {
             LocalDateTime.now().plusMinutes(15)
         );
 
+        // 1. Ensinamos o dublê de Rede a devolver dados falsos (Evita o NullPointerException e o Erro 500)
+        when(networkAuditService.extractClientIp(any())).thenReturn("127.0.0.1");
+        when(networkAuditService.extractUserAgent(any())).thenReturn("JUnit Test Browser");
+
+        // 2. Ensinamos o dublê de Serviço a devolver a reserva
         when(reserveService.createReserve(any(ReserveRequestDTO.class), any(), any()))
             .thenReturn(response);
 
+        // 3. Disparamos a requisição e esperamos o Status 201 Created
         mockMvc.perform(post("/api/reserves")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))

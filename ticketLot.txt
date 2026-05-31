@@ -1,0 +1,28 @@
+{
+    "name": "Pista VIP",
+    "price": 250.00,
+    "totalQuantity": 50,
+    "quantity": 1
+}
+
+response:
+
+{
+    "id": "6896911b-a84b-4200-a8b0-4886bc8ed245",
+    "event": {
+        "id": "2718d190-cf33-42f1-9177-e8913d870605",
+        "title": "Daft Punk Experience - Fortnite Edition",
+        "description": "Um show imersivo dentro do metaverso.",
+        "eventDate": "2026-09-27T20:00:00",
+        "location": "Epic Games Server",
+        "createdDate": "2026-05-13T17:11:44.727817",
+        "local": "Main Stage",
+        "status": "ACTIVE"
+    },
+    "name": "Pista VIP",
+    "quantity": 1,
+    "price": 250.00,
+    "totalQuantity": 50,
+    "availableQuantity": 50,
+    "createdDate": "2026-05-13T22:41:46.8366785"
+}

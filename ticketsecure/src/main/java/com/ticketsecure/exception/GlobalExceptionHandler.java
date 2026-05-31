@@ -11,7 +11,7 @@ import com.ticketsecure.dto.StandartErrorDTO;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-@RestControllerAdvice
+@RestControllerAdvice(basePackages = "com.ticketsecure")
 public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<StandartErrorDTO> handlerIllegalArgumentException(IllegalArgumentException ex, HttpServletRequest request) {

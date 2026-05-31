@@ -13,5 +13,20 @@
     "name": "spring.jpa.hibernate.ddl-auto",
     "type": "java.lang.String",
     "description": "A description for 'spring.jpa.hibernate.ddl-auto'"
+  },
+  {
+    "name": "ticketsecure.security.qr-salt",
+    "type": "java.lang.String",
+    "description": "A description for 'ticketsecure.security.qr-salt'"
+  },
+  {
+    "name": "llm.groq.url",
+    "type": "java.lang.String",
+    "description": "A description for 'llm.groq.url'"
+  },
+  {
+    "name": "llm.groq.key",
+    "type": "java.lang.String",
+    "description": "A description for 'llm.groq.key'"
   }
 ]}

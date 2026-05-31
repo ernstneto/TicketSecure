@@ -1,0 +1,13 @@
+../api/gate/validate (POST)
+{
+    "securityHash": "905a30993269f030b8ec946a08d2754f9689014915505cad5cf1fb16e9781cd9"
+}
+
+response:
+
+{
+    "status": "ALLOWED",
+    "message": "ACESSO LIBERADO! Bom evento.",
+    "eventTitle": "Daft Punk Experience - Fortnite Edition",
+    "userName": "Ernst Zeidler"
+}

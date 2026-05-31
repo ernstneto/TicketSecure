@@ -30,6 +30,7 @@ import com.ticketsecure.repository.ReserveRepository;
 import com.ticketsecure.repository.UserRepository;
 import com.ticketsecure.repository.TicketLotRepository;
 
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 @ExtendWith(MockitoExtension.class)
 public class ReserveServiceTest {
@@ -41,6 +42,9 @@ public class ReserveServiceTest {
 
     @Mock
     private TicketLotRepository ticketLotRepository;
+
+    @Mock
+    private RabbitTemplate rabbitTemplate;
 
     @InjectMocks
     private ReserveService reserveService;
@@ -63,7 +67,7 @@ public class ReserveServiceTest {
     public void deveCriarReservaComSucessoEDiminuirQuantidade() {
         ReserveRequestDTO request = new ReserveRequestDTO(user.getId(), ticketLot.getId());
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
-        when(ticketLotRepository.findById(ticketLot.getId())).thenReturn(Optional.of(ticketLot));
+        when(ticketLotRepository.findByIdForUpdate(ticketLot.getId())).thenReturn(Optional.of(ticketLot));
 
         Reserve savedReserve = new Reserve();
         savedReserve.setId(UUID.randomUUID());
@@ -91,13 +95,13 @@ public class ReserveServiceTest {
         ReserveRequestDTO request = new ReserveRequestDTO(user.getId(), ticketLot.getId());
 
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
-        when(ticketLotRepository.findById(ticketLot.getId())).thenReturn(Optional.of(ticketLot));
+        when(ticketLotRepository.findByIdForUpdate(ticketLot.getId())).thenReturn(Optional.of(ticketLot));
 
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
             reserveService.createReserve(request, "127.0.0.1", "Postman-Runtime");
         });
 
-        assertEquals("Lote de ingressos esgotado", exception.getMessage());
+        assertEquals("Ingressos esgotados para este lote!", exception.getMessage());
 
         verify(ticketLotRepository, never()).save(any());
         verify(reserveRepository, never()).save(any());

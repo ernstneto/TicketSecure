@@ -1,0 +1,22 @@
+# Environment variables (contains secrets)
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Maven
+target/
+
+# Node
+node_modules/
+dist/
+build/

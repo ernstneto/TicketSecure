@@ -1,0 +1,12 @@
+http://localhost:8080/api/reserves/b6e1d45c-fee5-4e12-89b8-c76a7eab59b5/pay
+
+response:
+
+{
+    "id": "b6e1d45c-fee5-4e12-89b8-c76a7eab59b5",
+    "userId": "c3c79b0c-efe3-4dee-9a79-a8d5d674a3c6",
+    "ticketLotId": "6896911b-a84b-4200-a8b0-4886bc8ed245",
+    "status": "PENDING_PAYMENT",
+    "reserveDate": "2026-05-14T16:46:53.623713",
+    "expiredDate": "2026-05-14T17:01:53.624715"
+}

@@ -15,7 +15,6 @@ import com.ticketsecure.domain.model.Reserve;
 import com.ticketsecure.domain.model.TicketLot;
 import com.ticketsecure.domain.model.User;
 import com.ticketsecure.dto.FraudCheckDTO;
-import com.ticketsecure.dto.PaymentDTO;
 import com.ticketsecure.dto.ReserveRequestDTO;
 import com.ticketsecure.dto.ReserveResponseDTO;
 import com.ticketsecure.repository.ReserveRepository;
@@ -41,14 +40,16 @@ public class ReserveService {
     }
 
     /**
-     * 1. CRIAÇÃO DA RESERVA (Com bloqueio de Overbooking)
-     */
+     * 1. CRIAÇÃO DA RESERVA (Com bloqueio de Overbooking - Pessimistic Lock)
+    */
     @Transactional
-    public ReserveResponseDTO createReserve(ReserveRequestDTO request, String userAgent, String sourceIp) {
+    public ReserveResponseDTO createReserve(ReserveRequestDTO request, String sourceIp, String userAgent) {
+        System.out.println("[🛒 RESERVA] Iniciando criacao de reserva com Lock Ativo...");
+        
         User user = userRepository.findById(request.userId())
                 .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
 
-        TicketLot lot = ticketLotRepository.findById(request.ticketLotId())
+        TicketLot lot = ticketLotRepository.findByIdForUpdate(request.ticketLotId())
                 .orElseThrow(() -> new IllegalArgumentException("Lote de ingressos não encontrado"));
 
         if (lot.getAvailableQuantity() <= 0) {
@@ -65,8 +66,8 @@ public class ReserveService {
         reserve.setTicketLot(lot);
         reserve.setStatus(ReserveStatus.PENDING_PAYMENT);
         reserve.setExpiredDate(LocalDateTime.now().plusMinutes(15));
-        reserve.setUserAgent(userAgent);
         reserve.setSourceIP(sourceIp);
+        reserve.setUserAgent(userAgent);
 
         reserve = reserveRepository.save(reserve);
 
@@ -81,51 +82,47 @@ public class ReserveService {
     }
 
     /**
-     * 2. PROCESSAMENTO DO PAGAMENTO (Com Motor Antifraude via RabbitMQ)
+     * 2. PROCESSAMENTO DO PAGAMENTO UNIFICADO (Com Motor Antifraude via RabbitMQ)
      */
     @Transactional
-    public ReserveResponseDTO confirmPayment(UUID reserveId) {
+    public ReserveResponseDTO processPaymentToFraudCheck(UUID reserveId, String sourceIp, String userAgent) {
         System.out.println("\n[DEBUG - PAGAMENTO] >>> Iniciando processamento para a Reserva ID: " + reserveId);
 
-        // RADAR 1: Tentar encontrar a reserva no banco
-        Reserve reserve;
-        try {
-            reserve = reserveRepository.findById(reserveId)
-                    .orElseThrow(() -> new IllegalArgumentException("Reserva não encontrada"));
-            System.out.println("[DEBUG - PAGAMENTO] Radar 1: Reserva encontrada! Status atual: " + reserve.getStatus());
-        } catch (Exception e) {
-            System.out.println("[DEBUG - PAGAMENTO - FALHA] Radar 1: Reserva não encontrada na base de dados.");
-            throw e;
-        }
-
-        // RADAR 2: Validar o status da reserva
+        // 1. Busca a reserva no banco de dados
+        Reserve reserve = reserveRepository.findById(reserveId)
+                .orElseThrow(() -> new IllegalArgumentException("Reserva não encontrada: " + reserveId));
+        
+        // 2. Valida se a reserva está aguardando pagamento
         if (reserve.getStatus() != ReserveStatus.PENDING_PAYMENT) {
-            System.out.println("[DEBUG - PAGAMENTO - FALHA] Radar 2: Status inválido para pagamento (" + reserve.getStatus() + ").");
-            throw new IllegalArgumentException("O pagamento não pode ser processado. Status atual: " + reserve.getStatus());
+            System.err.println("[❌ ERRO] Status inválido para pagamento: " + reserve.getStatus());
+            throw new IllegalStateException("Esta reserva não está pendente de pagamento.");
         }
-        System.out.println("[DEBUG - PAGAMENTO] Radar 2: Status válido (PENDING_PAYMENT). Montando dossiê antifraude...");
 
-        // RADAR 3: Montar o DTO e enviar para o RabbitMQ
+        // 3. Atualiza os dados de auditoria de rede para o motor antifraude
+        reserve.setSourceIP(sourceIp);
+        reserve.setUserAgent(userAgent);
+        reserveRepository.save(reserve);
+
+        // 4. Monta o dossiê (DTO) esperado pelo Cérebro Python
+        FraudCheckDTO dossie = new FraudCheckDTO(
+            reserve.getId(),
+            reserve.getUser().getId(),
+            reserve.getTicketLot().getPrice(),
+            java.time.LocalDateTime.now().toString(),
+            reserve.getSourceIP()
+        );
+
+        // 5. Envia para a Fila do RabbitMQ usando a constante global
         try {
-            FraudCheckDTO dossie = new FraudCheckDTO(
-                reserve.getId(),
-                reserve.getUser().getId(),
-                reserve.getTicketLot().getPrice(),
-                java.time.LocalDateTime.now().toString(), // Converte a data para String
-                "N/A" // Como aqui não temos o request HTTP, mandamos "N/A" (Não Aplicável)
-            );
-            System.out.println("[DEBUG - PAGAMENTO] Dossiê montado com sucesso. Valor total: " + dossie.totalAmount());
-
-            System.out.println("[DEBUG - PAGAMENTO] Tentando comunicar com o RabbitMQ...");
             rabbitTemplate.convertAndSend(RabbitMQconfig.FRAUD_CHECK_QUEUE, dossie);
-            System.out.println("[DEBUG - PAGAMENTO] Radar 3: Mensagem ENVIADA com sucesso para a fila do RabbitMQ!\n");
-
+            System.out.println("[✅ SUCESSO] Dossiê antifraude enviado para o RabbitMQ!");
         } catch (Exception e) {
-            System.out.println("[DEBUG - PAGAMENTO - FALHA] Radar 3: Erro de conversão ou falha de ligação com o RabbitMQ!");
-            e.printStackTrace(); // Isto vai imprimir o erro exato de ligação
-            throw e;
+            System.err.println("[💥 ERRO CRÍTICO] Falha ao comunicar com o RabbitMQ!");
+            e.printStackTrace();
+            throw new RuntimeException("Erro ao processar pagamento devido a falha na mensageria.", e);
         }
 
+        // 6. Retorna a confirmação para o Frontend
         return new ReserveResponseDTO(
                 reserve.getId(), 
                 reserve.getUser().getId(), 
@@ -157,50 +154,6 @@ public class ReserveService {
             reserveRepository.save(reserve);
             
             System.out.println("Reserva " + reserve.getId() + " expirada. Ingresso devolvido ao lote.");
-        }
-    }
-
-    @Transactional
-    public void processPayment(PaymentDTO paymentDTO, String sourceIp, String userAgent) {
-        System.out.println("[DEBUG - PAGAMENTO] >>> Iniciando processamento para a Reserva ID: " + paymentDTO.reserveId());
-
-        // 1. BUsca a reserva no banco de dados
-        Reserve reserve = reserveRepository.findById(paymentDTO.reserveId())
-                .orElseThrow(() -> new RuntimeException("Reserva não encontrada" + paymentDTO.reserveId()));
-
-        // 2. Valida se a reserva esta aguardando pagamento
-        if (!com.ticketsecure.domain.enumerate.ReserveStatus.PENDING_PAYMENT.equals(reserve.getStatus())) {
-            throw new RuntimeException("Esta reserva não está pendente de pagamento.");
-        }
-
-        // 3. Atualiza os dados de auditoria de rede diretamente no banco
-        reserve.setSourceIP(sourceIp);
-        reserve.setUserAgent(userAgent);
-        reserveRepository.save(reserve);
-
-        // 4. Monta o dossie (JSON) que será enviado para o cerebro Python
-        // Adaptamos para usar o DTO que a IA está esperando na Fila 1
-       FraudCheckDTO dossie = new FraudCheckDTO(
-            reserve.getId(),
-            reserve.getUser().getId(),
-            reserve.getTicketLot().getPrice(), // Pega o valor do ingresso no banco
-            java.time.LocalDateTime.now().toString(),
-            reserve.getSourceIP()
-        );
-
-        // 5. Envia para a fila do RabbitMQ (ticketsecure.fraud.check.queue) 
-        try {
-            // Se você estiver usando o ObjectMapper (Jackson) para converter para JSON:
-            // String jsonMessage = objectMapper.writeValueAsString(dossie);
-            // rabbitTemplate.convertAndSend(RabbitMQconfig.EXCHANGE_NAME, RabbitMQconfig.ROUTING_KEY_FRAUD_CHECK, jsonMessage);
-            
-            // Ou se estiver enviando o DTO direto (dependendo da sua configuração do RabbitTemplate):
-            rabbitTemplate.convertAndSend("", "ticketsecure.fraud.check.queue", dossie);
-
-            System.out.println("[DEBUG - PAGAMENTO] Radar 3: Mensagem ENVIADA com sucesso para a fila do RabbitMQ!");
-        } catch (Exception e) {
-            System.err.println("[💥 ERRO] Falha ao comunicar com o RabbitMQ.");
-            e.printStackTrace();
         }
     }
 }

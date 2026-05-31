@@ -28,7 +28,7 @@ public class TicketLotService {
         TicketLot newLot = TicketLot.builder()
             .event(event)
             .name(request.name())
-            .quantity(request.quantity())
+            //.quantity(request.quantity())
             .price(request.price())
             .totalQuantity(request.totalQuantity())
             .availableQuantity(request.totalQuantity())
@@ -40,7 +40,7 @@ public class TicketLotService {
             savedTicketLot.getId(),
             savedTicketLot.getEvent().getId(),
             savedTicketLot.getName(),
-            savedTicketLot.getQuantity(),
+            //savedTicketLot.getQuantity(),
             savedTicketLot.getPrice().toString(),
             savedTicketLot.getTotalQuantity(),
             savedTicketLot.getAvailableQuantity(),

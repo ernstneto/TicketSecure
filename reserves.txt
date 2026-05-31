@@ -1,0 +1,24 @@
+{
+    "userId": "c3c79b0c-efe3-4dee-9a79-a8d5d674a3c6",
+    "ticketLotId": "6896911b-a84b-4200-a8b0-4886bc8ed245"
+}
+
+response:
+
+{
+    "id": "cc6f9233-d799-49fc-92c5-ea9cb3f4aa10",
+    "userId": "c3c79b0c-efe3-4dee-9a79-a8d5d674a3c6",
+    "ticketLotId": "6896911b-a84b-4200-a8b0-4886bc8ed245",
+    "status": "PENDING_PAYMENT",
+    "reserveDate": "2026-05-13T23:31:28.0779051",
+    "expiredDate": "2026-05-13T23:46:28.0779051"
+}
+
+{
+    "id": "bdb248c5-90c8-443b-93f8-16578ee78212",
+    "userId": "c3c79b0c-efe3-4dee-9a79-a8d5d674a3c6",
+    "ticketLotId": "6896911b-a84b-4200-a8b0-4886bc8ed245",
+    "status": "PENDING_PAYMENT",
+    "reserveDate": "2026-05-13T23:48:03.6400876",
+    "expiredDate": "2026-05-14T00:03:03.6400876"
+}

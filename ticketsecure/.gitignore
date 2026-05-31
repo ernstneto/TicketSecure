@@ -66,3 +66,7 @@ Thumbs.db
 *.env.local
 
 **.txt
+**.md
+**.sh
+**.log
+*.md

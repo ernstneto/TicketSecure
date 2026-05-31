@@ -29,8 +29,8 @@ public class TicketLot {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
-    private Integer quantity;
+    //@Column(nullable = false)
+    //private Integer quantity;
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;

@@ -1,5 +1,5 @@
 package com.ticketsecure.domain.enumerate;
 
 public enum Role {
-    ADMIN, CLIENT
+    ADMIN, CLIENT, CUSTOMER, USER
 }

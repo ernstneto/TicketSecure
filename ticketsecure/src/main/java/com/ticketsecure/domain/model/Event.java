@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import jakarta.persistence.*;
 
 import com.ticketsecure.domain.enumerate.EventStatus;
+import com.ticketsecure.domain.enumerate.EventCategory;
 
 @Data
 @Entity
@@ -40,8 +41,34 @@ public class Event {
 
     @Column(name = "event_local", nullable = false)
     private String local;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = true)
+    @Builder.Default
+    private EventCategory category = EventCategory.OTHER;
+
+    @Column(nullable = true)
+    @Builder.Default
+    private String city = "";
+
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
     
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private EventStatus status;
+
+    @PrePersist
+    @PreUpdate
+    void ensureDefaults() {
+        if (category == null) {
+            category = EventCategory.OTHER;
+        }
+        if (city == null || city.isBlank()) {
+            city = location != null ? location : "";
+        }
+    }
 }

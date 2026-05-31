@@ -34,7 +34,7 @@ public class TicketLotController {
         System.out.println("Nome: " + ticketLot.getName());
         System.out.println("Preço: " + ticketLot.getPrice());
         System.out.println("Total Quantity: " + ticketLot.getTotalQuantity());
-        System.out.println("Quantity: " + ticketLot.getQuantity()); // Caso exista esse getter
+        //System.out.println("Quantity: " + ticketLot.getQuantity()); // Caso exista esse getter
         System.out.println("---------------------------------------------\n");
         
         System.out.println("\n\n=========================\nTicketLotCOntroler Part 1\n=========================\n\n");

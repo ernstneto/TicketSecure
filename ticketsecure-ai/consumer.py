@@ -2,13 +2,14 @@
 Microsserviço de detecção de fraudes (Consumer RabbitMQ).
 Lê a fila de verificação e envia o resultado de volta para o Java.
 """
+from datetime import datetime
 import json
 import pika
 import pandas as pd
 import pickle
 import sys
 import requests
-
+import time
 
 print("[🧠] Carregando modelo de Inteligência Artificial...")
 
@@ -26,14 +27,30 @@ def callback(ch, method, _properties, body):
 
     try:
         dossie = json.loads(body)
-        valor = float(dossie.get('totalAmount', 250.0))
-        
-        # Simulando um IP que veio do Java (No futuro, o Java mandará isso no JSON)
-        # Vamos usar um IP conhecido de um servidor de hospedagem na Alemanha
-        ip_cliente = dossie.get('sourceIp', '5.9.144.226') 
+        print(f"-> Analisando Reserva ID: {dossie.get('reserveId')}")
+        #print(f"-> Valor Total: R$ {dossie.get('totalAmount')}")
+        #print(f"-> IP de Origem: {dossie.get('sourceIp')}")
+        #valor=dossie.get('totalAmount',250.0)
+        valor = dossie.get('totalAmount', dossie.get('price', 250.0))
+        if isinstance(valor, str):
+            valor = float(valor)
+        print(f"-> valor do ingresso: R$ {float(valor):.2f}")
 
-        hora = 23 # Simulando compra de madrugada
+        ip_cliente = dossie.get('sourceIp', '5.9.144.226')
+        print(f"-> IP de Origem: {ip_cliente}")
 
+        time.sleep(2)
+
+        hora = 23
+        timestamp_str = dossie.get('attemptTime', dossie.get('timestamp', ''))
+        if timestamp_str:
+            try:
+                dt_obj = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+                hora = dt_obj.hour
+            except ValueError:
+                print(f"[💥 Erro] Timestamp em formato inválido: {timestamp_str}")
+
+        print("[⏳] Processando rede neural antifraude...")    
         print("[🌐] Consultando reputação do IP via radar global...")
         
         # Bate na API gratuita pedindo o País, se é Proxy e se é Hosting (Data Center)
@@ -71,10 +88,10 @@ def callback(ch, method, _properties, body):
 
         if previsao == 1:
             status_fraude = "DENIED"
-            print(f"[❌] Decisão da IA: BLOQUEADO (Padrão de Fraude Detectado)")
+            print("[❌] Decisão da IA: BLOQUEADO (Padrão de Fraude Detectado)")
         else:
             status_fraude = "APPROVED"
-            print(f"[✅] Decisão da IA: APPROVED")
+            print("[✅] Decisão da IA: APPROVED")
 
         # --- ENVIANDO O VEREDITO DE VOLTA PARA O JAVA ---
         resposta = {
@@ -97,7 +114,15 @@ def callback(ch, method, _properties, body):
         ch.basic_ack(delivery_tag=method.delivery_tag)
         print("-" * 40 + "\n")
 
-    except Exception as e: 
+    except json.JSONDecodeError as e:
+        print(f"[💥 Erro] JSON inválido recebido: {e}")
+    except requests.RequestException as e:
+        print(f"[💥 Erro] Falha na consulta externa (IP API): {e}")
+    except (KeyError, ValueError) as e:
+        print(f"[💥 Erro] Dados do dossiê inválidos ou incompletos: {e}")
+    except (pika.exceptions.AMQPError, AttributeError, TypeError, IndexError, OSError) as e:
+        # Tratamento para erros esperados/operacionais mais comuns sem capturar
+        # a Exception base, evitando o warning de "broad-exception-caught".
         print(f"[💥 Erro] Falha ao processar dossiê: {e}")
 
 def iniciar_cerebro():

@@ -19,7 +19,7 @@ public class UserTest {
             .email("ernst@teste.com")
             .senhaHash("senha123")
             .cpf("12345678901")
-            .role(Role.CLIENT)
+            .role(Role.USER)
             // Não precisamos passar ID nem Data, a classe gera sozinha!
             .build(); 
 

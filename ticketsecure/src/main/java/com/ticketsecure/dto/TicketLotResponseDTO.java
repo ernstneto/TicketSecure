@@ -7,7 +7,7 @@ public record TicketLotResponseDTO(
     UUID id,
     UUID eventId,
     String name,
-    int quantity,
+    //int quantity,
     String price,
     Integer totalQuantity,
     Integer availableQuantity,

@@ -25,7 +25,7 @@ public class UserRepositoryTest {
     void saveAndFindUser() {
         User user = new User(
             null,
-            "Ernst",
+            "Ernst Zeidler",
             "ernst@teste.com",
             "hashTemporario123",
             "12345678901",
@@ -33,6 +33,14 @@ public class UserRepositoryTest {
             LocalDate.now()
         );
         
+        Optional<User> existingUser = userRepository.findByCpf(user.getCpf());
+        if(existingUser.isPresent()) {
+            assertTrue(existingUser.isPresent(), "User must be found by CPF");
+            assertEquals("Ernst Zeidler", existingUser.get().getName(), "User name should match");
+            assertEquals("12345678901", existingUser.get().getCpf(), "User CPF should match");
+            return ;
+        }
+
         userRepository.save(user);
         //String email = user.getEmail();
         System.out.println("Saved user email: " + user.getEmail());

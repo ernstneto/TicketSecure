@@ -1,6 +1,8 @@
 package com.ticketsecure.controller;
 
 import com.ticketsecure.dto.PaymentDTO;
+import com.ticketsecure.dto.ReserveRequestDTO;
+import com.ticketsecure.dto.ReserveResponseDTO;
 import com.ticketsecure.dto.ReserveStatusDTO;
 import com.ticketsecure.domain.model.Reserve;
 import com.ticketsecure.domain.enumerate.ReserveStatus;
@@ -24,7 +26,6 @@ public class ReserveController {
     private final ReserveRepository reserveRepository;
     private final TicketRepository ticketRepository;
 
-    // Injeção de dependências via construtor (Melhor prática para testabilidade)
     public ReserveController(
             ReserveService reserveService,
             NetworkAuditService networkAuditService,
@@ -37,6 +38,24 @@ public class ReserveController {
     }
 
     /**
+     * Endpoint para CRIAR a reserva inicial
+     */
+    @PostMapping
+    public ResponseEntity<ReserveResponseDTO> createReserve(
+            @RequestBody ReserveRequestDTO request,
+            HttpServletRequest httpRequest) {
+
+        // Extrai dados da rede para rastreabilidade
+        String sourceIp = networkAuditService.extractClientIp(httpRequest);
+        String userAgent = networkAuditService.extractUserAgent(httpRequest);
+
+        ReserveResponseDTO response = reserveService.createReserve(request, sourceIp, userAgent);
+
+        // Retorna 201 Created
+        return ResponseEntity.status(201).body(response);
+    }
+
+    /**
      * Endpoint assíncrono para iniciar o fluxo de pagamento e análise antifraude.
      */
     @PostMapping("/pay")
@@ -44,45 +63,34 @@ public class ReserveController {
             @RequestBody PaymentDTO paymentDTO,
             HttpServletRequest request) {
 
-        // 1. Extração isolada dos dados de rede (Camada L7) usando o serviço especialista
         String sourceIp = networkAuditService.extractClientIp(request);
         String userAgent = networkAuditService.extractUserAgent(request);
 
         System.out.println("\n>>> Entrou no Controller! O ID recebido foi: " + paymentDTO.reserveId());
         System.out.println("[🔒 AUDITORIA] Compra iniciada pelo IP: " + sourceIp + " via " + userAgent);
 
-        // 2. Delegação segura para a camada de serviço processar e disparar para o RabbitMQ
-        reserveService.processPayment(paymentDTO, sourceIp, userAgent);
+        // Chamada corrigida apontando para o método unificado do Service
+        reserveService.processPaymentToFraudCheck(paymentDTO.reserveId(), sourceIp, userAgent);
 
-        // Retorno imediato (200 OK) para evitar o travamento da thread HTTP do cliente
         return ResponseEntity.ok("Pagamento recebido. Análise de risco e emissão assíncrona iniciadas.");
     }
 
     /**
-     * Endpoint de Polling para o Front-end ou Postman consultar o veredito final da transação.
+     * Endpoint de Polling para o Front-end consultar o veredito final da transação.
      */
     @GetMapping("/{id}/status")
     public ResponseEntity<ReserveStatusDTO> getReserveStatus(@PathVariable UUID id) {
-        // Busca a reserva para identificar o estado atual no banco
         Reserve reserve = reserveRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Reserva com o ID " + id + " não foi encontrada no servidor."));
+                .orElseThrow(() -> new RuntimeException("Reserva com o ID " + id + " não encontrada."));
 
         String hash = null;
-        
-        // Se o motor assíncrono já tiver confirmado a reserva, captura o hash gerado pelo TicketService
         if (ReserveStatus.CONFIRMED.equals(reserve.getStatus())) {
             hash = ticketRepository.findByReserveId(id)
                     .map(com.ticketsecure.domain.model.Ticket::getSecurityHash)
                     .orElse(null);
         }
 
-        // Monta a resposta limpa para o cliente externo
-        var response = new ReserveStatusDTO(
-                reserve.getId(),
-                reserve.getStatus().name(),
-                hash
-        );
-
+        var response = new ReserveStatusDTO(reserve.getId(), reserve.getStatus().name(), hash);
         return ResponseEntity.ok(response);
     }
 }

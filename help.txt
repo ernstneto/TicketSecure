@@ -1,0 +1,2 @@
+[System.Environment]::SetEnvironmentVariable("GROQ_API_KEY", "gsk_SuaChaveRealAqui", "User")
+.\mvnw spring-boot:run -Dspring-boot.run.arguments="--llm.groq.key=gsk_SuaChaveRealAqui"
