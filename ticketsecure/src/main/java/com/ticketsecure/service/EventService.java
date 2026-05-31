@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import com.ticketsecure.domain.enumerate.EventStatus;
 import com.ticketsecure.domain.enumerate.EventCategory;
 import com.ticketsecure.domain.model.Event;
+import com.ticketsecure.dto.EventDTO;
 import com.ticketsecure.dto.EventResponseDTO;
 import com.ticketsecure.repository.EventRepository;
 
@@ -19,20 +20,13 @@ public class EventService {
     }
 
     @Transactional
-    public EventResponseDTO createEvent(EventResponseDTO event) {
-        EventCategory category = event.category() != null ? event.category() : EventCategory.OTHER;
-        String city = event.city() != null && !event.city().isBlank() ? event.city() : event.location();
-
+    public EventResponseDTO createEvent(EventDTO event) {
         Event newEvent = Event.builder()
             .title(event.title())
             .description(event.description())
             .eventDate(event.eventDate())
             .location(event.location())
             .local(event.local())
-            .category(category)
-            .city(city)
-            .latitude(event.latitude())
-            .longitude(event.longitude())
             .status(EventStatus.ACTIVE)
             .build();
 

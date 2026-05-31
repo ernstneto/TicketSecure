@@ -3,6 +3,8 @@ package com.ticketsecure.controller;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,6 +22,8 @@ import com.ticketsecure.repository.TicketLotRepository;
 @RequestMapping("/api/events")
 public class TicketLotController {
 
+    private static final Logger logger = LoggerFactory.getLogger(TicketLotController.class);
+
     private final TicketLotRepository ticketLotRepository;
     private final EventRepository eventRepository;
 
@@ -30,18 +34,12 @@ public class TicketLotController {
 
     @PostMapping("/{eventId}/lots")
     public ResponseEntity<TicketLot> createTicketLot(@PathVariable UUID eventId, @RequestBody TicketLot ticketLot) {
-        System.out.println("\n[DEBUG] --- Inspecionando o Lote Recebido ---");
-        System.out.println("Nome: " + ticketLot.getName());
-        System.out.println("Preço: " + ticketLot.getPrice());
-        System.out.println("Total Quantity: " + ticketLot.getTotalQuantity());
-        //System.out.println("Quantity: " + ticketLot.getQuantity()); // Caso exista esse getter
-        System.out.println("---------------------------------------------\n");
-        
-        System.out.println("\n\n=========================\nTicketLotCOntroler Part 1\n=========================\n\n");
+        logger.debug("Criando lote - Nome: {}, Preco: {}, Quantidade: {}",
+                ticketLot.getName(), ticketLot.getPrice(), ticketLot.getTotalQuantity());
         // 1. Busca o evento no banco de dados para vincular ao lote
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new IllegalArgumentException("Evento não encontrado"));
-        System.out.println("\n\n=========================\nTicketLotCOntroler Part 2\n=========================\n\n");
+
         // 2. Configura os dados do lote
         ticketLot.setEvent(event);
         ticketLot.setAvailableQuantity(ticketLot.getTotalQuantity()); // A quantidade disponível começa cheia
@@ -49,10 +47,10 @@ public class TicketLotController {
             throw new IllegalArgumentException("A quantidade total é obrigatória e deve ser maior que zero!");
         }
         ticketLot.setCreatedDate(LocalDateTime.now());
-       System.out.println("\n\n=========================\nTicketLotCOntroler Part 3\n=========================\n\n"); 
+ 
         // 3. Salva no banco
         TicketLot savedLot = ticketLotRepository.save(ticketLot);
-        System.out.println("\n\n=========================\nTicketLotCOntroler Part 4\n=========================\n\n");
+        logger.info("Lote de ingressos criado com sucesso. Evento ID: {}, Lote ID: {}", eventId, savedLot.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(savedLot);
         
     }

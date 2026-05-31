@@ -3,3 +3,33 @@ Adicionar anotação @Setter(AccessLevel.NONE) aos campos sensíveis: Para prote
 Adicionar tratamento de exceções personalizadas: Para lidar com erros específicos, você pode adicionar tratamento de exceções personalizadas em métodos relevantes. Por exemplo, você pode criar uma exceção personalizada para lidar com erros de autenticação ou interação com o bot do Discord.
 Adicionar métodos personalizados para gerar o hashCode() e o equals(): Em vez de usar o método gerado pelo Lombok, você pode adicionar métodos personalizados para o hashCode() e o equals() em sua classe User. Isso permite que você tenha mais controle sobre como esses métodos são implementados, especialmente quando se trata de lidar com relações complexas no banco de dados.
 Adicionar validações e restrições de dados: Você pode adicionar validações e restrições de dados aos campos da classe User para garantir que os valores sejam válidos e estejam dentro dos limites esperados. Por exemplo, você pode adicionar anotações como @Pattern, @Size, @NotBlank, etc., para validar a entrada de dados.
+
+
+----------------------------------------------------------------------
+
+O que precisa melhorar 🔴
+1. Segurança — URGENTE
+
+A autenticação JWT está com permitAll() em todos os endpoints de API. Qualquer pessoa pode criar reservas, consultar dados, etc. Isso precisa ser corrigido antes de qualquer deploy.
+As credenciais do banco (admin/adminpassword) estão em texto plano. Usar variáveis de ambiente.
+2. Logging
+
+O projeto usa System.out.println em vez de um logger estruturado (SLF4J/Logback). Em produção, esses logs se perdem. Trocar é simples e faz enorme diferença.
+3. Validação de DTOs
+
+Os DTOs não têm anotações de validação (@NotNull, @Positive, etc.). Isso significa que dados inválidos podem chegar até o banco de dados antes de falhar.
+4. Tratamento de exceções
+
+O GlobalExceptionHandler genérico retorna a mesma mensagem para qualquer erro. Diferenciar erros de validação (400), conflito (409) e erro interno (500) melhora muito a experiência do frontend.
+5. CORS hardcoded
+
+O CorsConfig tem localhost:5173 hardcoded. Em produção isso vai quebrar. Usar variável de ambiente.
+
+ugestões de melhoria 💡
+Prioridade	Ação	Impacto
+🔴 Alta	Implementar filtro JWT e proteger endpoints	Segurança
+🔴 Alta	Trocar System.out por SLF4J	Observabilidade
+🟠 Média	Adicionar @Valid nos DTOs	Qualidade dos dados
+🟠 Média	Refinar GlobalExceptionHandler	UX da API
+🟡 Baixa	CORS via variável de ambiente	Deploy
+🟡 Baixa	Adicionar Swagger/OpenAPI	Documentação

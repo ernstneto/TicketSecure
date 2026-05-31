@@ -3,6 +3,8 @@ package com.ticketsecure.config;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +17,8 @@ import com.ticketsecure.repository.TicketLotRepository;
 
 @Component
 public class DemoEventSeeder implements CommandLineRunner {
+
+    private static final Logger logger = LoggerFactory.getLogger(DemoEventSeeder.class);
 
     private final EventRepository eventRepository;
     private final TicketLotRepository ticketLotRepository;
@@ -100,7 +104,7 @@ public class DemoEventSeeder implements CommandLineRunner {
                 LocalDateTime.now().plusDays(4),
                 new LotSeed("Maratona", BigDecimal.valueOf(45.00), 50));
 
-        System.out.println("[🎫 SEED] Catálogo demo de eventos carregado com sucesso.");
+        logger.info("[SEED] Catalogo demo de eventos carregado com sucesso.");
     }
 
     private void seedEvent(String title, String description, EventCategory category, String city,

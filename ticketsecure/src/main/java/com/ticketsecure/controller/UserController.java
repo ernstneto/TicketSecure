@@ -1,37 +1,40 @@
 package com.ticketsecure.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.ticketsecure.dto.UserRequestDTO;
 import com.ticketsecure.dto.UserResponseDTO;
 import com.ticketsecure.service.UserService;
-
 import jakarta.validation.Valid;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
-    @Autowired
-    private UserService userService;
+
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+
+    private final UserService userService;
+
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
 
     @PostMapping
     public ResponseEntity<UserResponseDTO> createUser(@Valid @RequestBody UserRequestDTO userRequestDTO) { // <-- Altere para UserResponseDTO aqui
         try {
             UserResponseDTO createdUser = userService.createUser(userRequestDTO); // <-- Altere a variável aqui
-            System.out.println("USER WAS BEEN CREATED: " + createdUser);
+            logger.info("Usuario criado com sucesso: {}", createdUser.email());
             return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
         } catch (IllegalArgumentException e) {
-            System.out.println("USER EXISTS WITH ERROR: " + e.getMessage());
+            logger.warn("Falha ao criar usuario: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
         }
     }

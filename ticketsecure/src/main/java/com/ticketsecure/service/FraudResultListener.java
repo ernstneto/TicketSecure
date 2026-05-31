@@ -1,5 +1,7 @@
 package com.ticketsecure.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class FraudResultListener {
+
+    private static final Logger logger = LoggerFactory.getLogger(FraudResultListener.class);
     
     private final ReserveRepository reserveRepository;
     private final TicketLotRepository ticketLotRepository;
@@ -32,9 +36,8 @@ public class FraudResultListener {
     @Transactional
     public void processFraudResult(FraudResultDTO result) {
         try {
-            System.out.println("\n[🔔 JAVA LISTENER] O Cérebro Python respondeu com sucesso!");
-            System.out.println("-> Reserva ID: " + result.reserveId());
-            System.out.println("-> Veredito: " + result.status());
+            logger.info("[LISTENER] O Cerebro Python respondeu com sucesso! Reserva ID: {}, Veredito: {}",
+                    result.reserveId(), result.status());
             
             // Busca a reserva correspondente
             Reserve reserve = reserveRepository.findById(result.reserveId())
@@ -48,8 +51,7 @@ public class FraudResultListener {
                 // 2. Gera o Ingresso seguro
                 Ticket ticket = ticketService.generateTicketForReserve(reserve);
                 
-                System.out.println("[✅] SUCESSO! Reserva confirmada e ingresso gerado.");
-                System.out.println("[🎫] HASH: " + ticket.getSecurityHash());
+                logger.info("[SUCESSO] Reserva confirmada e ingresso gerado. HASH: {}", ticket.getSecurityHash());
                 
             } else {
                 reserve.setStatus(com.ticketsecure.domain.enumerate.ReserveStatus.CANCELLED);
@@ -59,14 +61,10 @@ public class FraudResultListener {
                 ticketLotRepository.save(lot);
                 reserveRepository.save(reserve);
 
-                System.out.println("[❌] Fraude Detectada! Reserva CANCELLED e ingresso devolvido ao lote.");
+                logger.warn("[FRAUDE] Fraude detectada! Reserva CANCELLED e ingresso devolvido ao lote. Reserva ID: {}", reserve.getId());
             }
-            System.out.println("--------------------------------------------------\n");
-            
         } catch (Exception e) {
-            System.err.println("\n[💥 ERRO CRÍTICO NO LISTENER] Falha ao processar o veredito:");
-            e.printStackTrace();
-            System.err.println("--------------------------------------------------\n");
+            logger.error("[ERRO CRITICO NO LISTENER] Falha ao processar o veredito para reserva: {}", result.reserveId(), e);
         }
     }
 }

@@ -1,3 +1,8 @@
 package com.ticketsecure.dto;
 
-public record TicketValidationRequestDTO(String securityHash) {}
+import jakarta.validation.constraints.NotBlank;
+
+public record TicketValidationRequestDTO(
+    @NotBlank(message = "O hash de segurança é obrigatório")
+    String securityHash
+) {}

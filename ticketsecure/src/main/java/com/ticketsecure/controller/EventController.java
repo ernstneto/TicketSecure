@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ticketsecure.domain.enumerate.EventCategory;
+import com.ticketsecure.dto.EventDTO;
 import com.ticketsecure.dto.EventResponseDTO;
 import com.ticketsecure.dto.EventSearchCriteria;
 import com.ticketsecure.dto.EventSuggestionDTO;
@@ -34,7 +35,7 @@ public class EventController {
     }
 
     @PostMapping
-    public ResponseEntity<EventResponseDTO> createEvent(@Valid @RequestBody EventResponseDTO eventRequestDTO) {
+    public ResponseEntity<EventResponseDTO> createEvent(@Valid @RequestBody EventDTO eventRequestDTO) {
         EventResponseDTO createdEvent = eventService.createEvent(eventRequestDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdEvent);
     }

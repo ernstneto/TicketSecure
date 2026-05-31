@@ -12,6 +12,9 @@ import com.ticketsecure.repository.ReserveRepository;
 import com.ticketsecure.repository.TicketRepository;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,6 +23,8 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/reserves")
 public class ReserveController {
+
+    private static final Logger logger = LoggerFactory.getLogger(ReserveController.class);
 
     private final ReserveService reserveService;
     private final NetworkAuditService networkAuditService;
@@ -42,7 +47,7 @@ public class ReserveController {
      */
     @PostMapping
     public ResponseEntity<ReserveResponseDTO> createReserve(
-            @RequestBody ReserveRequestDTO request,
+            @Valid @RequestBody ReserveRequestDTO request,
             HttpServletRequest httpRequest) {
 
         // Extrai dados da rede para rastreabilidade
@@ -60,14 +65,13 @@ public class ReserveController {
      */
     @PostMapping("/pay")
     public ResponseEntity<String> processPayment(
-            @RequestBody PaymentDTO paymentDTO,
+            @Valid @RequestBody PaymentDTO paymentDTO,
             HttpServletRequest request) {
 
         String sourceIp = networkAuditService.extractClientIp(request);
         String userAgent = networkAuditService.extractUserAgent(request);
 
-        System.out.println("\n>>> Entrou no Controller! O ID recebido foi: " + paymentDTO.reserveId());
-        System.out.println("[🔒 AUDITORIA] Compra iniciada pelo IP: " + sourceIp + " via " + userAgent);
+        logger.info("[PAGAMENTO] Reserva ID: {}, IP: {}, UserAgent: {}", paymentDTO.reserveId(), sourceIp, userAgent);
 
         // Chamada corrigida apontando para o método unificado do Service
         reserveService.processPaymentToFraudCheck(paymentDTO.reserveId(), sourceIp, userAgent);

@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,8 @@ import com.ticketsecure.repository.UserRepository;
 
 @Service
 public class ReserveService {
+
+    private static final Logger logger = LoggerFactory.getLogger(ReserveService.class);
 
     private final ReserveRepository reserveRepository;
     private final TicketLotRepository ticketLotRepository;
@@ -44,7 +48,7 @@ public class ReserveService {
     */
     @Transactional
     public ReserveResponseDTO createReserve(ReserveRequestDTO request, String sourceIp, String userAgent) {
-        System.out.println("[🛒 RESERVA] Iniciando criacao de reserva com Lock Ativo...");
+        logger.info("[RESERVA] Iniciando criacao de reserva com Lock Ativo...");
         
         User user = userRepository.findById(request.userId())
                 .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
@@ -86,7 +90,7 @@ public class ReserveService {
      */
     @Transactional
     public ReserveResponseDTO processPaymentToFraudCheck(UUID reserveId, String sourceIp, String userAgent) {
-        System.out.println("\n[DEBUG - PAGAMENTO] >>> Iniciando processamento para a Reserva ID: " + reserveId);
+        logger.info("[PAGAMENTO] Iniciando processamento para a Reserva ID: {}", reserveId);
 
         // 1. Busca a reserva no banco de dados
         Reserve reserve = reserveRepository.findById(reserveId)
@@ -94,7 +98,7 @@ public class ReserveService {
         
         // 2. Valida se a reserva está aguardando pagamento
         if (reserve.getStatus() != ReserveStatus.PENDING_PAYMENT) {
-            System.err.println("[❌ ERRO] Status inválido para pagamento: " + reserve.getStatus());
+            logger.warn("[ERRO] Status invalido para pagamento: {}", reserve.getStatus());
             throw new IllegalStateException("Esta reserva não está pendente de pagamento.");
         }
 
@@ -115,10 +119,9 @@ public class ReserveService {
         // 5. Envia para a Fila do RabbitMQ usando a constante global
         try {
             rabbitTemplate.convertAndSend(RabbitMQconfig.FRAUD_CHECK_QUEUE, dossie);
-            System.out.println("[✅ SUCESSO] Dossiê antifraude enviado para o RabbitMQ!");
+            logger.info("[SUCESSO] Dossie antifraude enviado para o RabbitMQ!");
         } catch (Exception e) {
-            System.err.println("[💥 ERRO CRÍTICO] Falha ao comunicar com o RabbitMQ!");
-            e.printStackTrace();
+            logger.error("[ERRO CRITICO] Falha ao comunicar com o RabbitMQ!", e);
             throw new RuntimeException("Erro ao processar pagamento devido a falha na mensageria.", e);
         }
 
@@ -153,7 +156,7 @@ public class ReserveService {
             ticketLotRepository.save(lot);
             reserveRepository.save(reserve);
             
-            System.out.println("Reserva " + reserve.getId() + " expirada. Ingresso devolvido ao lote.");
+            logger.info("Reserva {} expirada. Ingresso devolvido ao lote.", reserve.getId());
         }
     }
 }

@@ -7,6 +7,8 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -15,6 +17,8 @@ import com.ticketsecure.dto.ResolvedLocation;
 
 @Service
 public class GeocodingService {
+
+    private static final Logger logger = LoggerFactory.getLogger(GeocodingService.class);
 
     private static final String NOMINATIM_URL =
             "https://nominatim.openstreetmap.org/reverse?lat=%s&lon=%s&format=json&addressdetails=1&accept-language=pt-BR";
@@ -66,7 +70,7 @@ public class GeocodingService {
 
             return Optional.of(new ResolvedLocation(city, neighbourhood, displayName));
         } catch (Exception e) {
-            System.err.println("[GEO] Falha na geocodificação reversa: " + e.getMessage());
+            logger.error("[GEO] Falha na geocodificacao reversa: {}", e.getMessage());
             return Optional.empty();
         }
     }
