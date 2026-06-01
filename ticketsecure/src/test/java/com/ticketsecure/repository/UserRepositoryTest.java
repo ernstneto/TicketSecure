@@ -9,12 +9,14 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ticketsecure.domain.enumerate.Role;
 import com.ticketsecure.domain.model.User;
 
 @SpringBootTest
+@ActiveProfiles("test")
 @Transactional
 public class UserRepositoryTest {
     
@@ -47,7 +49,7 @@ public class UserRepositoryTest {
         Optional<User> userFind = userRepository.findByEmail(user.getEmail());
         
         assertTrue(userFind.isPresent(), "User must be found by email");
-        assertEquals("Ernst", userFind.get().getName(), "User name should match");
+        assertEquals("Ernst Zeidler", userFind.get().getName(), "User name should match");
         assertEquals("12345678901", userFind.get().getCpf(), "User CPF should match");
     }
 }

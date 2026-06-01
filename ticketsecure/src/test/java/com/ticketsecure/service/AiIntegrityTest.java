@@ -2,6 +2,7 @@ package com.ticketsecure.service;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.io.IOException;
 import java.net.URI;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.DisplayName;
 @SpringBootTest(properties = {
     "llm.groq.key=${GROQ_API_KEY:}"
 })
+@ActiveProfiles("test")
 public class AiIntegrityTest {
 
     // Extraídos EXATAMENTE da sua lista oficial de disponíveis:
